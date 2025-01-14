@@ -1,0 +1,8 @@
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  timestamp DateTime @default(now())
+  channelId Int
+  pseudo    Pseudo   @relation(fields: [pseudoId], references: [id])
+  pseudoId  Int
+}
