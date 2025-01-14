@@ -12,7 +12,6 @@
                 <input type="text" v-model="pseudo" placeholder="Ozheim" required>
                 <input type="submit" value="Se Connecter">
             </form>
-
                 <p v-if="responseMessage" class="mt-6 text-orange-400 font-medium text-center">
                     {{ responseMessage }}
                 </p>
