@@ -6,7 +6,7 @@
             <h2>Choisissez un pseudo :</h2>
             <form @submit.prevent="submitPseudo">
                 <input type="text" v-model="pseudo" placeholder="Ozheim" required>
-                <input type="submit" value="Envoyer">
+                <input type="submit" value="Se Connecter">
             </form>
 
             <p v-if="responseMessage">{{ responseMessage }}</p>
@@ -33,6 +33,10 @@ export default {
                 const data = await response.json();
                 this.responseMessage = `Pseudo enregistré : ${data.pseudo.name}`;
                 console.log(data);
+                this.$router.push({ path: '/home'});
+                localStorage.setItem('pseudo', this.pseudo);
+
+
             } catch (error) {
                 console.error('Erreur lors de l\'enregistrement :', error);
                 this.responseMessage = 'Erreur lors de l\'enregistrement.';
