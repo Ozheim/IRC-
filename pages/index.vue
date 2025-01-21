@@ -7,10 +7,10 @@
             </h1>
 
         <div>
-            <h2>Choisissez un pseudo :</h2>
+            <h2 class="">Choisissez un pseudo :</h2>
             <form @submit.prevent="submitPseudo">
-                <input type="text" v-model="pseudo" placeholder="Ozheim" required>
-                <input type="submit" value="Se Connecter">
+                <input type="text" v-model="pseudo" placeholder="Ozheim" required class="w-full px-4 py-2 bg-gray-700 text-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400">
+                <input type="submit" value="Se Connecter" class="mt-4 w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600" >
             </form>
                 <p v-if="responseMessage" class="mt-6 text-orange-400 font-medium text-center">
                     {{ responseMessage }}

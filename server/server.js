@@ -21,13 +21,13 @@ io.on("connection", (socket) => {
   socket.on("userConnected", (nickname) => {
     addUser(socket.id, nickname);
     console.log(`${nickname} est connecté`);
-  });
+  });l
 
   socket.on("joinChannel", (channelName) => {
     createChannel(channelName);
     socket.join(channelName);
-    socket.emit("messageHistory", channels[channelName]); // Envoie l'historique
-    io.to(channelName).emit("message", {
+    socket.emit("messageHistory", channels[channelName]); 
+    io.to(channelName).emit("message", {ll
       nickname: "System",
       message: `${getUser(socket.id)} a rejoint ${channelName}`,
     });

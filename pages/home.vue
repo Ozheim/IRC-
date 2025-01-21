@@ -11,7 +11,7 @@
     <div>
       <h1>{{ currentChannel }}</h1>
       <div id="chat-messages">
-        <p v-for="(msg, index) in messagesByChannel[currentChannel] || []" :key="index">
+        <p v-for="(msg, index) in messages[currentChannel] || []" :key="index">
           <strong>{{ msg.nickname }}</strong>: {{ msg.message }}
         </p>
       </div>
@@ -28,7 +28,7 @@
 
 <script>
 import { io } from "socket.io-client";
-import { ref, onMounted } from "vue";
+import { ref, reactive, onMounted } from "vue";
 
 export default {
   setup() {
@@ -39,7 +39,7 @@ export default {
       { id: 3, name: "Gras de nunu" },
     ]);
     const currentChannel = ref("Général");
-    const messagesByChannel = ref({});
+    const messages = reactive({}); // Store messages for each channel
     const message = ref("");
     const nickname = ref("");
 
@@ -55,39 +55,45 @@ export default {
       socket.value.emit("joinChannel", currentChannel.value);
 
       socket.value.on("message", (msg) => {
-        if (!messagesByChannel.value[msg.channelName]) {
-          messagesByChannel.value[msg.channelName] = [];
+        if (!messages[msg.channelName]) {
+          messages[msg.channelName] = [];
         }
-        messagesByChannel.value[msg.channelName].push(msg);
+        messages[msg.channelName].push(msg);
       });
     });
 
     const sendMessage = () => {
       if (message.value.trim()) {
-        const newMessage = {
+        socket.value.emit("sendMessage", {
           channelName: currentChannel.value,
           message: message.value,
           nickname: nickname.value,
-        };
-        socket.value.emit("sendMessage", newMessage);
-
-        if (!messagesByChannel.value[currentChannel.value]) {
-          messagesByChannel.value[currentChannel.value] = [];
+        });
+        if (!messages[currentChannel.value]) {
+          messages[currentChannel.value] = [];
         }
-        messagesByChannel.value[currentChannel.value].push(newMessage);
+        messages[currentChannel.value].push({
+          nickname: nickname.value,
+          message: message.value,
+        });
         message.value = "";
       }
     };
 
     const selectChannel = (channelName) => {
-      currentChannel.value = channelName;
-      socket.value.emit("joinChannel", channelName);
+      if (currentChannel.value !== channelName) {
+        socket.value.emit("joinChannel", channelName);
+        currentChannel.value = channelName;
+        if (!messages[channelName]) {
+          messages[channelName] = []; // Initialize messages for the new channel
+        }
+      }
     };
 
     return {
       channels,
       currentChannel,
-      messagesByChannel,
+      messages,
       message,
       nickname,
       sendMessage,
