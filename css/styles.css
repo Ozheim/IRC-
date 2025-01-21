@@ -1,5 +1,6 @@
 @tailwind base;
 @tailwind components;
+<<<<<<< HEAD
 @tailwind utilities;
 
 html,
@@ -8,3 +9,10 @@ body {
   width: 100% !important;
 }
 
+=======
+@layer utilities {
+    .shadow-neon {
+      box-shadow: 0 4px 20px rgba(128, 90, 213, 0.8), 0 0 30px rgba(75, 0, 130, 0.6);
+    }
+  }
+>>>>>>> 635e044d61e3bf95f280fde271d4b83b4c4bf823
