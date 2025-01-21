@@ -8,8 +8,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-  "build:css": "tailwindcss -i ./css/styles.css -o ./public/styles.css --watch"
-
+    "build:css": "tailwindcss -i ./css/styles.css -o ./public/styles.css --watch"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",

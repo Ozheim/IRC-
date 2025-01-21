@@ -1,29 +1,18 @@
 <template>
-  <div>
-    <div>
-      <ul>
-        <li v-for="channel in channels" :key="channel.id" @click="selectChannel(channel.name)">
-          <a href="#">{{ channel.name }}</a>
-        </li>
-      </ul>
-    </div>
+        <div>
+            <div class="">
+            <ul class="">
+                <li v-for="channel in channels" :key="channel.id" @click="selectChannel(channel.name)">
+                <a href="#">{{ channel.name }}</a>
+                </li>
+            </ul>
 
-    <div>
-      <h1>{{ currentChannel }}</h1>
-      <div id="chat-messages">
-        <p v-for="(msg, index) in messagesByChannel[currentChannel] || []" :key="index">
-          <strong>{{ msg.nickname }}</strong>: {{ msg.message }}
-        </p>
-      </div>
-      <input
-        v-model="message"
-        type="text"
-        placeholder="Bienvenue" 
-        @keydown.enter="sendMessage"
-      />
-      <button @click="sendMessage">Envoyer</button>
-    </div>
-  </div>
+        </div>
+        <div>
+            <h1>{{ currentChannel }} </h1>
+            <input type="text" placeholder="votre message">
+        </div>
+     </div>
 </template>
 
 <script>
