@@ -6,7 +6,6 @@ const prisma = new PrismaClient();
 const postPseudo = async (event: H3Event) => {
   const body: { name: string } = await readBody(event);
 
-
   const newPseudo = await prisma.pseudo.create({
     data: {
       name: body.name,

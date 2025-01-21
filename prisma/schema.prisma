@@ -1,4 +1,3 @@
-  
 
 generator client {
   provider = "prisma-client-js"
@@ -10,8 +9,8 @@ datasource db {
 }
 
 
-//  ------------------------------------------------- 
-// Section message 
+//  -------------------------------------------------
+// Section message
 
 model Message {
   id        Int      @id @default(autoincrement())
@@ -24,7 +23,7 @@ model Message {
 
 // ------------------------------------------------------
 
-// section pseudo 
+// section pseudo
 
 model Pseudo {
   id        Int      @id @default(autoincrement())

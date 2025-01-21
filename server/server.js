@@ -26,8 +26,8 @@ io.on("connection", (socket) => {
   socket.on("joinChannel", (channelName) => {
     createChannel(channelName);
     socket.join(channelName);
-    socket.emit("messageHistory", channels[channelName]); 
-    io.to(channelName).emit("message", {ll
+    socket.emit("messageHistory", channels[channelName]);
+    io.to(channelName).emit("message", {
       nickname: "System",
       message: `${getUser(socket.id)} a rejoint ${channelName}`,
     });
