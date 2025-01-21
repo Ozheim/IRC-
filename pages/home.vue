@@ -1,3 +1,4 @@
+
 <template>
   <div>
     <div>
@@ -18,7 +19,7 @@
       <input
         v-model="message"
         type="text"
-        placeholder="Bienvenue" 
+        placeholder="Bienvenue"
         @keydown.enter="sendMessage"
       />
       <button @click="sendMessage">Envoyer</button>
@@ -27,8 +28,8 @@
 </template>
 
 <script>
-import { io } from "socket.io-client";
-import { ref, reactive, onMounted } from "vue";
+import { CommandService } from "@/server/CommandService.js";
+import { Notyf } from "notyf";
 
 export default {
   setup() {
@@ -39,9 +40,10 @@ export default {
       { id: 3, name: "Gras de nunu" },
     ]);
     const currentChannel = ref("Général");
-    const messages = reactive({}); // Store messages for each channel
+    const messages = reactive({});
     const message = ref("");
     const nickname = ref("");
+    const notyf = new Notyf();
 
     onMounted(() => {
       const storedPseudo = localStorage.getItem("pseudo");
@@ -59,23 +61,31 @@ export default {
           messages[msg.channelName] = [];
         }
         messages[msg.channelName].push(msg);
+
+        if (msg.nickname === "System") {
+          console.log(msg.message);
+        }
       });
     });
 
     const sendMessage = () => {
       if (message.value.trim()) {
-        socket.value.emit("sendMessage", {
-          channelName: currentChannel.value,
-          message: message.value,
-          nickname: nickname.value,
-        });
-        if (!messages[currentChannel.value]) {
-          messages[currentChannel.value] = [];
+        const msg = message.value.trim();
+
+        if (msg.startsWith("/")) {
+          const [command, ...args] = msg.split(" ");
+          const result = CommandService.executeCommand(command, ...args);
+          if (result) {
+            notyf.success(result); // Afficher le retour comme notification
+          }
+        } else {
+          socket.value.emit("sendMessage", {
+            channelName: currentChannel.value,
+            message: msg,
+            nickname: nickname.value,
+          });
         }
-        messages[currentChannel.value].push({
-          nickname: nickname.value,
-          message: message.value,
-        });
+
         message.value = "";
       }
     };
@@ -85,7 +95,7 @@ export default {
         socket.value.emit("joinChannel", channelName);
         currentChannel.value = channelName;
         if (!messages[channelName]) {
-          messages[channelName] = []; // Initialize messages for the new channel
+          messages[channelName] = [];
         }
       }
     };
@@ -101,6 +111,7 @@ export default {
     };
   },
 };
+
 </script>
 
 <style scoped>

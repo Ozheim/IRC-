@@ -11,3 +11,7 @@ export const removeUser = (socketId) => {
 export const getUser = (socketId) => {
   return users.get(socketId);
 };
+
+export const getAllUsers = () => {
+  return Array.from(users.values());
+};

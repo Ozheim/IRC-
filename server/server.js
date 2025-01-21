@@ -1,27 +1,10 @@
-import { createServer } from "http";
-import { Server } from "socket.io";
-import { addUser, removeUser, getUser } from "./users.js";
-import {
-  channels,
-  createChannel,
-  deleteChannel,
-  addMessage,
-} from "./channels.js";
-
-const httpServer = createServer();
-const io = new Server(httpServer, {
-  cors: {
-    origin: "*",
-  },
-});
-
 io.on("connection", (socket) => {
   console.log("Un utilisateur s'est connecté");
 
   socket.on("userConnected", (nickname) => {
     addUser(socket.id, nickname);
     console.log(`${nickname} est connecté`);
-  });l
+  });
 
   socket.on("joinChannel", (channelName) => {
     createChannel(channelName);
@@ -34,9 +17,35 @@ io.on("connection", (socket) => {
   });
 
   socket.on("sendMessage", ({ channelName, message, nickname }) => {
-    const newMessage = { nickname, message };
-    addMessage(channelName, newMessage);
-    io.to(channelName).emit("message", newMessage);
+    if (message.trim() === "/list") {
+      // Récupérer tous les utilisateurs connectés
+      const allUsers = Array.from(getAllUsers());
+      socket.emit("message", {
+        nickname: "System",
+        message: `Utilisateurs connectés : ${allUsers.join(", ")}`,
+      });
+    } else {
+      const newMessage = { nickname, message };
+      addMessage(channelName, newMessage);
+      io.to(channelName).emit("message", newMessage);
+    }
+  });
+
+  socket.on("listChannels", () => {
+    const availableChannels = Object.keys(channels);
+    socket.emit("message", {
+      nickname: "System",
+      message: `Channels disponibles : ${availableChannels.join(", ")}`,
+    });
+  });
+
+  socket.on("listUsers", (channelName) => {
+    const usersInChannel = Array.from(io.sockets.adapter.rooms.get(channelName) || []);
+    const userNames = usersInChannel.map((id) => getUser(id));
+    socket.emit("message", {
+      nickname: "System",
+      message: `Utilisateurs dans ${channelName} : ${userNames.join(", ")}`,
+    });
   });
 
   socket.on("disconnect", () => {
@@ -44,8 +53,4 @@ io.on("connection", (socket) => {
     console.log(`${user} s'est déconnecté`);
     removeUser(socket.id);
   });
-});
-
-httpServer.listen(3001, () => {
-  console.log("Serveur Socket.IO lancé sur le port 3001");
 });
