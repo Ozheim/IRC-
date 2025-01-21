@@ -1,6 +1,0 @@
-model Pseudo {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  messages  Message[]
-}
