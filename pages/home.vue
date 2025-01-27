@@ -2,23 +2,29 @@
   <div>
     <div>
       <ul>
-        <li v-for="channel in channels" :key="channel.id" @click="selectChannel(channel.name)">
+        <li
+          v-for="channel in channels"
+          :key="channel.id"
+          @click="selectChannel(channel.name)"
+        >
           <a href="#">{{ channel.name }}</a>
         </li>
       </ul>
     </div>
 
     <div>
-      <h1>{{ currentChannel }}</h1>
+      <p>Messages pour le canal : {{ currentChannel }}</p>
+      <p>Clés disponibles dans messages : {{ Object.keys(messages) }}</p>
       <div id="chat-messages">
-        <p v-for="(msg, index) in messages[currentChannel] || []" :key="index">
+        <p v-for="(msg, index) in (messages[currentChannel] || [])" :key="index">
           <strong>{{ msg.nickname }}</strong>: {{ msg.message }}
         </p>
+        <p v-if="!(messages[currentChannel]?.length)">Aucun message pour ce canal.</p>
       </div>
       <input
         v-model="message"
         type="text"
-        placeholder="Bienvenue"
+        placeholder="Tapez votre message"
         @keydown.enter="sendMessage"
       />
       <button @click="sendMessage">Envoyer</button>
@@ -27,9 +33,8 @@
 </template>
 
 <script>
-import { CommandService } from "@/server/CommandService.js";
-import { io } from "socket.io-client"
-
+import { io } from "socket.io-client";
+import { ref, reactive, onMounted } from "vue";
 
 export default {
   setup() {
@@ -40,10 +45,13 @@ export default {
       { id: 3, name: "Gras de nunu" },
     ]);
     const currentChannel = ref("Général");
-    const messages = reactive({});
+    const messages = reactive({
+      Général: [],
+      Privé: [],
+      "Gras de nunu": [],
+    });
     const message = ref("");
     const nickname = ref("");
-    
 
     onMounted(() => {
       const storedPseudo = localStorage.getItem("pseudo");
@@ -54,17 +62,17 @@ export default {
       }
 
       socket.value = io("http://localhost:4000");
+
       socket.value.emit("joinChannel", currentChannel.value);
 
       socket.value.on("message", (msg) => {
-        if (!messages[msg.channelName]) {
-          messages[msg.channelName] = [];
-        }
-        messages[msg.channelName].push(msg);
+        const channel = msg.channelName || currentChannel.value;
 
-        if (msg.nickname === "System") {
-          console.log(msg.message);
+        if (!messages[channel]) {
+          messages[channel] = [];
         }
+
+        messages[channel].push(msg);
       });
     });
 
@@ -72,19 +80,11 @@ export default {
       if (message.value.trim()) {
         const msg = message.value.trim();
 
-        if (msg.startsWith("/")) {
-          const [command, ...args] = msg.split(" ");
-          const result = CommandService.executeCommand(command, ...args);
-          if (result) {
-            notyf.success(result); // Afficher le retour comme notification
-          }
-        } else {
-          socket.value.emit("sendMessage", {
-            channelName: currentChannel.value,
-            message: msg,
-            nickname: nickname.value,
-          });
-        }
+        socket.value.emit("sendMessage", {
+          channelName: currentChannel.value,
+          message: msg,
+          nickname: nickname.value,
+        });
 
         message.value = "";
       }
@@ -94,6 +94,7 @@ export default {
       if (currentChannel.value !== channelName) {
         socket.value.emit("joinChannel", channelName);
         currentChannel.value = channelName;
+
         if (!messages[channelName]) {
           messages[channelName] = [];
         }
@@ -111,15 +112,25 @@ export default {
     };
   },
 };
-
 </script>
 
 <style scoped>
 #chat-messages {
-  border: 1px solid #ddd;
+  border: 1px solid red;
   height: 300px;
   overflow-y: auto;
   padding: 10px;
   margin-bottom: 10px;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 10px;
+}
+
+button {
+  padding: 8px 15px;
+  margin-top: 10px;
 }
 </style>
