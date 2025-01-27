@@ -5,10 +5,17 @@ import { PrismaClient } from "@prisma/client"; // Prisma
 
 // Initialisation de Prisma
 const prisma = new PrismaClient();
+const httpServer = createServer();
 
 // Initialisation du serveur HTTP et de Socket.IO
 const server = createServer(); // Serveur HTTP simple
-const io = new Server(server); // Initialisation de Socket.IO
+const io = new Server(httpServer, {
+  cors: {
+    origin: "http://localhost:3001", // Autorise les requêtes depuis l'origine
+    methods: ["GET", "POST"], // Méthodes HTTP autorisées
+    credentials: true, // Si tu utilises des cookies ou des sessions
+  },
+}); // Initialisation de Socket.IO
 
 // Variables en mémoire pour stocker les utilisateurs et canaux
 const users = {};
@@ -99,7 +106,7 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = 3000;
+const PORT = 4000;
 server.listen(PORT, () => {
   console.log(`Serveur lancé sur http://localhost:${PORT}`);
 });

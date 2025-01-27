@@ -1,4 +1,3 @@
-
 <template>
   <div>
     <div>
@@ -29,6 +28,7 @@
 
 <script>
 import { CommandService } from "@/server/CommandService.js";
+import { io } from "socket.io-client"
 
 
 export default {
@@ -53,7 +53,7 @@ export default {
         window.location.href = "/";
       }
 
-      socket.value = io("http://localhost:3001");
+      socket.value = io("http://localhost:4000");
       socket.value.emit("joinChannel", currentChannel.value);
 
       socket.value.on("message", (msg) => {
