@@ -1,95 +1,79 @@
-// Import des modules nécessaires
 import { Server } from "socket.io";
 import { createServer } from "http";
 import { PrismaClient } from "@prisma/client";
+import { CommandHandler } from "./CommandService.js";
+import { addUser, removeUser, getUser, getAllUsers } from "./user.js";
+import { channel } from "diagnostics_channel";
 
-// Initialisation de Prisma
 const prisma = new PrismaClient();
-
-// Initialisation du serveur HTTP
 const httpServer = createServer();
-
-// Initialisation de Socket.IO avec le serveur HTTP
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:3000", // Remplace par l'origine de ton frontend
+    origin: "http://localhost:3000",
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
-// Variables en mémoire pour stocker les utilisateurs et canaux
-const users = {};
-const channels = {};
+const channels = {}; // Déclare channels ici, globalement dans le fichier
 
-// Fonctions utilitaires
-async function addUser(id, nickname) {
-  users[id] = nickname;
-}
-
-async function getUser(id) {
-  return users[id];
-}
-
-async function removeUser(id) {
-  delete users[id];
-}
-
-async function createChannel(channelName) {
-  if (!channels[channelName]) {
-    channels[channelName] = [];
-  }
-}
-
-async function addMessage(channelName, message) {
-  if (!channels[channelName]) {
-    channels[channelName] = [];
-  }
-  channels[channelName].push(message);
-}
-
-// Gestion des connexions Socket.IO
 io.on("connection", (socket) => {
   console.log("Un utilisateur s'est connecté :", socket.id);
 
-  socket.on("userConnected", async (nickname) => {
-    await addUser(socket.id, nickname);
-    console.log(`${nickname} est connecté`);
+  socket.on("userConnected", (nickname) => {
+    addUser(socket.id, nickname);
+    console.log(`${nickname} est connecté.`);
   });
 
-  socket.on("joinChannel", async (channelName) => {
-    await createChannel(channelName);
-    socket.join(channelName);
-    socket.emit("messageHistory", channels[channelName]);
-    io.to(channelName).emit("message", {
-      nickname: "System",
-      message: `${await getUser(socket.id)} a rejoint ${channelName}`,
-    });
+  socket.on("getCommands", () => {
+    const commands = CommandHandler.availableCommands;
+    socket.emit("commandsList", commands);
   });
+
+  async function addMessage(channelName, message) {
+    if (!channels[channelName]) {
+      channels[channelName] = []; // Si le channel n'existe pas, crée-le
+    }
+    channels[channelName].push(message); // Ajoute le message au channel
+    console.log(`Message ajouté à ${channelName} :`, message);
+  }
 
   socket.on("sendMessage", async ({ channelName, message, nickname }) => {
-    console.log("Message reçu :", message);
-    if (message.trim() === "/list") {
-      const allUsers = Object.values(users);
-      socket.emit("message", {
-        nickname: "System",
-        message: `Utilisateurs connectés : ${allUsers.join(", ")}`,
-      });
-    } else {
-      const newMessage = { nickname, message };
-      await addMessage(channelName, newMessage);
-      io.to(channelName).emit("message", newMessage);
+    // Check if the message starts with "/"
+    if (message.startsWith("/")) {
+      // Process the command by passing the socket, command, and parameters
+      const [command, ...params] = message.split(" ");
+      const response = CommandHandler.processCommand(io, command, ...params);
+
+      console.log("Command response:", response); // Add this line for debugging
+      socket.emit("");
+
+      // If the command returns a response, send it back to the user
+      if (response) {
+        socket.emit("commandResponse", response);
+      }
+      return; // Stop further processing of the message
     }
+
+    console.log("Message reçu :", message);
+    const newMessage = { channelName, nickname, message };
+
+    // Ajoute le message au channel
+
+    await addMessage(channelName, newMessage);
+
+    // Diffuse le message à tous les utilisateurs du channel
+    // console.log(channelName, newMessage);
+    io.emit("message", newMessage);
   });
 
-  socket.on("disconnect", async () => {
-    const user = await getUser(socket.id);
-    console.log(`${user} s'est déconnecté`);
-    await removeUser(socket.id);
+  socket.on("disconnect", () => {
+    const user = getUser(socket.id);
+    console.log(`${user} s'est déconnecté.`);
+    removeUser(socket.id);
   });
 });
 
-// Démarrage du serveur HTTP
 const PORT = 4000;
 httpServer.listen(PORT, () => {
   console.log(`Serveur Socket.IO lancé sur http://localhost:${PORT}`);

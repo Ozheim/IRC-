@@ -13,5 +13,7 @@ export const getUser = (socketId) => {
 };
 
 export const getAllUsers = () => {
-  return Array.from(users.values());
+  const allUsers = Array.from(users.values());
+  console.log("Liste des utilisateurs connectés :", allUsers);
+  return allUsers;
 };
