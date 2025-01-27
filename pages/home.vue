@@ -29,7 +29,7 @@
 
 <script>
 import { CommandService } from "@/server/CommandService.js";
-import { Notyf } from "notyf";
+
 
 export default {
   setup() {
@@ -43,7 +43,7 @@ export default {
     const messages = reactive({});
     const message = ref("");
     const nickname = ref("");
-    const notyf = new Notyf();
+    
 
     onMounted(() => {
       const storedPseudo = localStorage.getItem("pseudo");
