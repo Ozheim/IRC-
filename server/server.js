@@ -3,7 +3,6 @@ import { createServer } from "http";
 import { PrismaClient } from "@prisma/client";
 import { CommandHandler } from "./CommandService.js";
 import { addUser, removeUser, getUser, getAllUsers } from "./user.js";
-import { channel } from "diagnostics_channel";
 
 const prisma = new PrismaClient();
 const httpServer = createServer();
@@ -43,7 +42,11 @@ io.on("connection", (socket) => {
     if (message.startsWith("/")) {
       // Process the command by passing the socket, command, and parameters
       const [command, ...params] = message.split(" ");
-      const response = CommandHandler.processCommand(io, command, ...params);
+      const response = CommandHandler.processCommand(
+        socket,
+        command,
+        ...params
+      );
 
       console.log("Command response:", response); // Add this line for debugging
       socket.emit("");

@@ -68,7 +68,7 @@ import { ref, reactive, onMounted, onUnmounted } from "vue";
 
 export default {
   setup() {
-    const socket = ref(null); // Socket.IO instance
+    const socket = ref(null); 
     const channels = ref([
       { id: 1, name: "Général" },
       { id: 2, name: "Privé" },
@@ -79,7 +79,7 @@ export default {
       Général: [],
       Privé: [],
       "Gras de nunu": [],
-    }); // Initialiser les messages pour chaque canal
+    }); 
     const message = ref("");
     const nickname = ref("");
 
