@@ -97,7 +97,7 @@ export default {
         return;
       }
 
-      socket.value = io("http://localhost:4000");
+      socket.value = io("http://localhost:3001");
 
       socket.value.emit("joinChannel", currentChannel.value);
 

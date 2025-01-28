@@ -8,13 +8,12 @@ datasource db {
 }
 
 model Message {
-  id        Int      @id @default(autoincrement())
-  content   String
-  timestamp DateTime @default(now())
-  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade) // ✅ Ajout relation avec Channel
-  channelId Int
-  pseudo    Pseudo   @relation(fields: [pseudoId], references: [id], onDelete: Cascade) // ✅ Ajout relation avec Pseudo
-  pseudoId  Int
+  id          Int       @id @default(autoincrement())
+  content     String
+  channel     Channel?  @relation(fields: [channelId], references: [id])
+  channelId   Int?
+  pseudo      Pseudo?   @relation(fields: [pseudoId], references: [id])
+  pseudoId    Int?
 }
 
 model Pseudo {
