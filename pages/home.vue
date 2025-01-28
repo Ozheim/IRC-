@@ -100,6 +100,7 @@ export default {
       socket.value = io("http://localhost:3001");
 
       socket.value.emit("joinChannel", currentChannel.value);
+      // 1. effectuer un socket.value.emit("userConnected", nickname.value);
 
       socket.value.on("message", (msg) => {
         if (!messages[msg.channelName]) {

@@ -40,6 +40,12 @@ io.on("connection", (socket) => {
 
   socket.on("userConnected", (nickname) => {
     addUser(socket.id, nickname);
+    // 2. cette fonction alors s'executera
+    const newUser = prisma.pseudo.create({
+      data: {
+        name: nickname,
+      },
+    });
     console.log(`${nickname} est connecté.`);
   });
 
@@ -58,9 +64,11 @@ io.on("connection", (socket) => {
     const newMessage = await prisma.message.create({
       data: {
         content: message.message,
+        channelId: await prisma.channel.findUnique({ where: { name: channelName } }).then((channel) => channel.id),
+        //pseudoId: await prisma.channel.findUnique({ where: { name: message.nickname } }).then((pseudo) => pseudo.id),
+        // 3. on peut donc décommenter le pseudoId car l'utilisateur sera ajouté à la db lors de la connexion; donc il pourra trouver le pseudoId lors de la création du message
       },
     });
-
     console.log(`Message added to channel "${channelName}":`, newMessage);
     //
   }
