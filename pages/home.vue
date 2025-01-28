@@ -64,11 +64,11 @@
 
 <script>
 import { io } from "socket.io-client";
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, onUnmounted } from "vue";
 
 export default {
   setup() {
-    const socket = ref(null);
+    const socket = ref(null); // Socket.IO instance
     const channels = ref([
       { id: 1, name: "Général" },
       { id: 2, name: "Privé" },
@@ -89,11 +89,12 @@ export default {
         nickname.value = storedPseudo;
       } else {
         window.location.href = "/";
+        return;
       }
 
       socket.value = io("http://localhost:3001");
       socket.value.emit("joinChannel", currentChannel.value);
-
+      // Écouter les messages du serveur
       socket.value.on("message", (msg) => {
         if (!messages[msg.channelName]) {
           messages[msg.channelName] = [];
@@ -104,6 +105,25 @@ export default {
         const chatContainer = document.getElementById("chat-messages");
         chatContainer.scrollTop = chatContainer.scrollHeight;
       });
+    
+      socket.value.on("users", (users) => {
+        console.log("user list:", users)
+      });
+
+      socket.value.on("channels", (filtered) => {
+        console.log("channel list:", filtered)
+      });
+
+      socket.value.on("error", (msg) => {
+        console.log("received error from server:", msg)
+      })
+
+    });
+
+    onUnmounted(() => {
+      if (socket.value) {
+        socket.value.disconnect(); // Déconnecte proprement le socket
+      }
     });
 
     const sendMessage = () => {

@@ -1,75 +1,70 @@
 <template>
-    <ul class="commandmenu">
-      <li 
-        v-for="(command, index) in commands" 
-        :key="command.command" 
-        @mouseover="setCurrentCommand(index)" 
-        :class="{ active: currentCommand === index }"
-        @click="selectCommand(command.command)"
-      >
-        <span class="command-text">{{ command.command }}</span>
-        <span class="command-description">{{ command.description }}</span>
+  <div>
+    <h2>Liste des Commandes</h2>
+    <input
+      v-model="searchTerm"
+      type="text"
+      placeholder="Rechercher une commande..."
+      class="border p-2 rounded w-full mb-4"
+    />
+    <ul>
+      <li v-for="cmd in filteredCommands" :key="cmd.cmd">
+        <strong>{{ cmd.cmd }}</strong>: {{ cmd.details }}
       </li>
     </ul>
-  </template>
-  
-  <script>
-  export default {
-    props: {
-      currentCommand: {
-        type: Number,
-        default: 0,
-        required: true,
-      },
-      commands: {
-        type: Array,
-        default: () => [],
-        required: true,
-      },
-    },
-    methods: {
-      selectCommand(command) {
-        this.$emit("commandSelected", command);
-      },
-      setCurrentCommand(index) {
-        this.$emit("updateCurrentCommand", index);
-      },
-    },
-  };
-  </script>
-  
-  <style scoped>
-  .commandmenu {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  
-    li {
-      padding: 10px;
-      cursor: pointer;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      margin-bottom: 5px;
-      transition: background-color 0.2s;
-  
-      &:hover {
-        background-color: #f0f0f0;
+  </div>
+</template>
+
+<script>
+import { ref, computed, onMounted } from "vue";
+import { io } from "socket.io-client";
+
+export default {
+  name: "CommandMenu",
+  setup() {
+    const socket = ref(null);
+    const commands = ref([]);
+    const searchTerm = ref("");
+
+    // Initialisation de Socket.IO
+    onMounted(() => {
+      if (typeof window !== "undefined") {
+        socket.value = io("http://localhost:4000");
+
+        // Émet l'événement pour récupérer les commandes
+        socket.value.emit("getCommands");
+
+        // Écoute la réponse du backend
+        socket.value.on("commandsList", (data) => {
+          console.log("Commandes reçues :", data); // Vérification dans la console
+          commands.value = data;
+        });
       }
-  
-      &.active {
-        background-color: #007bff;
-        color: #fff;
-      }
-    }
-  
-    .command-text {
-      font-weight: bold;
-      margin-right: 5px;
-    }
-  
-    .command-description {
-      color: #666;
-    }
-  }
-  </style>
-  
+    });
+
+    // Filtrer les commandes selon la recherche
+    const filteredCommands = computed(() =>
+      commands.value.filter(
+        (cmd) =>
+          cmd.cmd.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
+          cmd.details.toLowerCase().includes(searchTerm.value.toLowerCase())
+      )
+    );
+
+    return {
+      commands,
+      searchTerm,
+      filteredCommands,
+    };
+  },
+};
+</script>
+
+<style scoped>
+input {
+  margin-bottom: 10px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+</style>
