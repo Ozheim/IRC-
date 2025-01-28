@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { Server } from "socket.io";
 import { createServer } from "http";
 import { PrismaClient } from "@prisma/client";
@@ -8,7 +11,7 @@ const prisma = new PrismaClient();
 const httpServer = createServer();
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "http://localhost:3001",
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -66,7 +69,10 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = 4000;
+// 📌 Création des channels par défaut avant le lancement du serveur
+await createDefaultChannels();
+
+const PORT = 3001;
 httpServer.listen(PORT, () => {
-  console.log(`Serveur Socket.IO lancé sur http://localhost:${PORT}`);
+  console.log(`🚀 Serveur Socket.IO lancé sur http://localhost:${PORT}`);
 });
