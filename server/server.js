@@ -1,61 +1,125 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { Server } from "socket.io";
 import { createServer } from "http";
-import { PrismaClient } from "@prisma/client";
-import { CommandHandler } from "./CommandService.js";
-import { addUser, removeUser, getUser, getAllUsers } from "./user.js";
-import { channel } from "diagnostics_channel";
+import prisma from "./prismaClient.js";
+import { addUser, removeUser, getUser } from "./user.js";
 
-const prisma = new PrismaClient();
+console.log("📌 Modèles disponibles dans Prisma :", Object.keys(prisma));
+console.log("✅ DATABASE_URL:", process.env.DATABASE_URL || "❌ Non définie ! Vérifie ton fichier .env");
+
 const httpServer = createServer();
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "http://localhost:3001",
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
-const channels = {}; // Déclare channels ici, globalement dans le fichier
+// 📌 Création des channels par défaut
+async function createDefaultChannels() {
+  const defaultChannels = ["Général", "Privé", "Gras de nunu"];
 
+  for (const name of defaultChannels) {
+    const existingChannel = await prisma.channel.findUnique({ where: { name } });
+
+    if (!existingChannel) {
+      await prisma.channel.create({ data: { name } });
+      console.log(`✅ Channel créé : ${name}`);
+    }
+  }
+}
+
+// 📌 Fonction pour récupérer l'ID d'un channel
+async function getChannelId(channelName) {
+  const channel = await prisma.channel.findUnique({
+    where: { name: channelName },
+    select: { id: true },
+  });
+
+  if (!channel) {
+    console.error(`❌ Erreur : Channel "${channelName}" introuvable.`);
+    return null;
+  }
+
+  return channel.id;
+}
+
+// 📌 Gestion des connexions Socket.IO
 io.on("connection", (socket) => {
   console.log("Un utilisateur s'est connecté :", socket.id);
 
-  socket.on("userConnected", (nickname) => {
-    addUser(socket.id, nickname);
-    console.log(`${nickname} est connecté.`);
-  });
+  // 📌 Connexion d'un utilisateur
+  socket.on("userConnected", async (nickname) => {
+    console.log(`📥 Pseudo reçu du client: "${nickname}"`); // Debug
+    try {
+      let user = await prisma.pseudo.findUnique({ where: { name: nickname } });
 
-  socket.on("getCommands", () => {
-    const commands = CommandHandler.availableCommands;
-    socket.emit("commandsList", commands);
-  });
+      if (!user) {
+        user = await prisma.pseudo.create({ data: { name: nickname } });
+        console.log(`✅ Nouveau pseudo enregistré : ${nickname}`);
+      }
 
-  async function addMessage(channelName, message) {
-    if (!channels[channelName]) {
-      channels[channelName] = []; // Si le channel n'existe pas, crée-le
+      addUser(socket.id, user.name);
+      socket.emit("nicknameAccepted", user.name); // ✅ Ajout d'un retour pour le client
+      console.log(`${user.name} est connecté.`);
+    } catch (error) {
+      console.error("❌ Erreur lors de la connexion utilisateur :", error);
     }
-    channels[channelName].push(message); // Ajoute le message au channel
-    console.log(`Message ajouté à ${channelName} :`, message);
-  }
+  });
 
+  // 📌 Rejoindre un channel
+  socket.on("joinChannel", async (channelName) => {
+    try {
+      socket.join(channelName);
+      console.log(`👤 ${socket.id} a rejoint le canal : ${channelName}`);
+
+      const channelId = await getChannelId(channelName);
+      if (!channelId) return;
+
+      const messages = await prisma.message.findMany({
+        where: { channelId },
+        include: { pseudo: true },
+        orderBy: { timestamp: "asc" },
+      });
+
+      socket.emit("previousMessages", { channel: channelName, messages });
+    } catch (error) {
+      console.error("❌ Erreur lors de la récupération des messages :", error);
+    }
+  });
+
+  // 📌 Envoi de message
   socket.on("sendMessage", async ({ channelName, message, nickname }) => {
-    if (message.startsWith("/")) {
-      const [command, ...params] = message.split(" ");
-      const response = CommandHandler.processCommand(socket, command, ...params);
+    try {
+      const channelId = await getChannelId(channelName);
+      if (!channelId) return;
 
-      console.log("Command response:", response);
-      socket.emit("commandResponse", response);
-      return;
+      let user = await prisma.pseudo.findUnique({ where: { name: nickname } });
+
+      if (!user) {
+        user = await prisma.pseudo.create({ data: { name: nickname } });
+      }
+
+      const newMessage = await prisma.message.create({
+        data: {
+          content: message,
+          channelId,
+          pseudoId: user.id,
+        },
+        include: { pseudo: true },
+      });
+
+      io.to(channelName).emit("message", { channel: channelName, message: newMessage });
+      console.log(`💾 Message enregistré et diffusé dans ${channelName} :`, newMessage);
+    } catch (error) {
+      console.error("❌ Erreur lors de l'enregistrement du message :", error);
     }
-
-    console.log("Message reçu :", message);
-    const newMessage = { channelName, nickname, message };
-
-    await addMessage(channelName, newMessage);
-
-    io.emit("message", newMessage);
   });
 
+  // 📌 Déconnexion d'un utilisateur
   socket.on("disconnect", () => {
     const user = getUser(socket.id);
     console.log(`${user} s'est déconnecté.`);
@@ -63,7 +127,10 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = 4000;
+// 📌 Création des channels par défaut avant le lancement du serveur
+await createDefaultChannels();
+
+const PORT = 3001;
 httpServer.listen(PORT, () => {
-  console.log(`Serveur Socket.IO lancé sur http://localhost:${PORT}`);
+  console.log(`🚀 Serveur Socket.IO lancé sur http://localhost:${PORT}`);
 });

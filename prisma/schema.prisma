@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,29 +7,25 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-//  -------------------------------------------------
-// Section message
-
 model Message {
   id        Int      @id @default(autoincrement())
   content   String
   timestamp DateTime @default(now())
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade) // ✅ Ajout relation avec Channel
   channelId Int
-  pseudo    Pseudo   @relation(fields: [pseudoId], references: [id])
+  pseudo    Pseudo   @relation(fields: [pseudoId], references: [id], onDelete: Cascade) // ✅ Ajout relation avec Pseudo
   pseudoId  Int
 }
 
-// ------------------------------------------------------
-
-// section pseudo
-
 model Pseudo {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  createdAt DateTime @default(now())
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  createdAt DateTime  @default(now())
   messages  Message[]
 }
 
-// -----------------------------------------------------
-
+model Channel {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  messages  Message[]
+}
