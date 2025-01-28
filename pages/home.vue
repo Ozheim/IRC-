@@ -54,45 +54,81 @@ export default {
     const nickname = ref("");
 
     onMounted(() => {
-      const storedPseudo = localStorage.getItem("pseudo");
-      if (storedPseudo) {
-        nickname.value = storedPseudo;
-      } else {
-        window.location.href = "/";
-        return;
-      }
+  const storedPseudo = localStorage.getItem("pseudo");
+  if (storedPseudo) {
+    nickname.value = storedPseudo;
+  } else {
+    window.location.href = "/";
+    return;
+  }
 
-      // Initialisation de Socket.IO
-      socket.value = io("http://localhost:4000");
+  socket.value = io("http://localhost:4000");
 
-      // Rejoindre le canal initial
-      socket.value.emit("joinChannel", currentChannel.value);
-      // Écouter les messages du serveur
-      socket.value.on("message", (msg) => {
-        console.log("Message reçu côté client :", msg);
-        if (!messages[msg.channelName]) {
-          messages[msg.channelName] = [];
-        }
-        messages[msg.channelName].push(msg);
-      });
-    
-      socket.value.on("users", (users) => {
-        console.log("user list:", users)
-      });
+// join 
+  socket.value.emit("joinChannel", currentChannel.value);
 
-      socket.value.on("channels", (filtered) => {
-        console.log("channel list:", filtered)
-      });
 
-      socket.value.on("error", (msg) => {
-        console.log("received error from server:", msg)
-      })
+  socket.value.on("message", (msg) => {
+    console.log("Message reçu côté client :", msg);
+    if (!messages[msg.channelName]) {
+      messages[msg.channelName] = [];
+    }
+    messages[msg.channelName].push(msg);
+  });
 
-    });
+// users 
+  socket.value.on("users", (users) => {
+    console.log("Liste des utilisateurs :", users);
+  });
+
+// check list 
+  socket.value.on("channels", (filtered) => {
+    console.log("Liste des channels :", filtered);
+  });
+
+// listen errors 
+  socket.value.on("error", (msg) => {
+    console.error("Erreur reçue du serveur :", msg);
+  });
+
+// listen success
+  socket.value.on("success", (msg) => {
+    console.log("Message de succès :", msg);
+  });
+
+ // notyf 
+  socket.value.on("joinedChannel", (channelName) => {
+    console.log(`Vous avez rejoint le channel : ${channelName}`);
+    currentChannel.value = channelName;
+  });
+
+// chan created
+  socket.value.on("channelCreated", (channelName) => {
+    console.log(`Nouveau channel créé : ${channelName}`);
+  });
+
+  // chan deleted 
+  socket.value.on("channelDeleted", (channelName) => {
+    console.log(`Channel supprimé : ${channelName}`);
+  });
+
+ // change nickname 
+  socket.value.on("nicknameChanged", (newNick) => {
+    console.log(`Votre nouveau pseudo est : ${newNick}`);
+    nickname.value = newNick;
+  });
+
+// leaved chanel   
+  socket.value.on("leftChannel", (channelName) => {
+    console.log(`Vous avez quitté le channel : ${channelName}`);
+  });
+});
+
+
 
     onUnmounted(() => {
       if (socket.value) {
-        socket.value.disconnect(); // Déconnecte proprement le socket
+        socket.value.disconnect(); 
       }
     });
 
