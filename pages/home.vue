@@ -1,6 +1,6 @@
 <template>
   <div class="chat-container">
-    <!-- Barre latérale (Canaux) -->
+ 
     <div class="sidebar">
       <div class="sidebar-header">
         <h2>Canaux</h2>
@@ -24,7 +24,7 @@
       <!-- Barre d'entête -->
       <div class="header">
         <h1>
-          Messages pour : <span>{{ currentChannel }}</span>
+          <span>{{ currentChannel }}</span>
         </h1>
       </div>
 
