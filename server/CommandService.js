@@ -128,7 +128,7 @@ export class CommandHandler {
     try {
       if (typeof socket.leave === "function") {
         socket.leave(name);
-        socket.emit("success", `Vous avez quitté le channel youhou "${name}".`);
+        socket.emit("success", `Vous avez quitté le channel "${name}".`);
       } else {
         throw new Error("socket.leave n'est pas disponible.");
       }

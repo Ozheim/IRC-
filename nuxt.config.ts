@@ -1,5 +1,7 @@
 export default defineNuxtConfig({
-  css: ['~/public/styles.css'],
+  css: [
+    '@/styles/main.scss', 
+  ],
   compatibilityDate: '2025-01-20',
 
   

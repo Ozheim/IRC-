@@ -14,7 +14,7 @@ const io = new Server(httpServer, {
   },
 });
 
-const channels = {}; // Déclare channels ici, globalement dans le fichier
+const channels = {};
 
 io.on("connection", (socket) => {
   console.log("Un utilisateur s'est connecté :", socket.id);
@@ -31,9 +31,9 @@ io.on("connection", (socket) => {
 
   async function addMessage(channelName, message) {
     if (!channels[channelName]) {
-      channels[channelName] = []; // Si le channel n'existe pas, crée-le
+      channels[channelName] = [];
     }
-    channels[channelName].push(message); // Ajoute le message au channel
+    channels[channelName].push(message);
     console.log(`Message ajouté à ${channelName} :`, message);
   }
 
