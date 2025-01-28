@@ -1,6 +1,6 @@
 <template>
   <div class="chat-container">
- 
+    <!-- Barre latérale (Canaux) -->
     <div class="sidebar">
       <div class="sidebar-header">
         <h2>Canaux</h2>
@@ -97,7 +97,7 @@ export default {
         return;
       }
 
-      socket.value = io("http://localhost:3001");
+      socket.value = io("http://localhost:4000");
 
       socket.value.emit("joinChannel", currentChannel.value);
 

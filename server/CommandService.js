@@ -117,15 +117,24 @@ export class CommandHandler {
     channelStore.deleteChannel(name);
     socket.emit("success", `Channel "${name}" supprimé avec succès.`);
   }
-
   static exitChannel(socket, name) {
     const channelStore = useChannelStore();
     if (channelStore.currentChannel !== name) {
       return socket.emit("error", `Vous n'êtes pas dans le channel "${name}".`);
     }
+
     channelStore.leaveChannel(name);
-    socket.leave(name);
-    socket.emit("success", `Vous avez quitté le channel "${name}".`);
-    socket.join("Général");
+
+    try {
+      if (typeof socket.leave === "function") {
+        socket.leave(name);
+        socket.emit("success", `Vous avez quitté le channel "${name}".`);
+      } else {
+        throw new Error("socket.leave n'est pas disponible.");
+      }
+    } catch (error) {
+      console.error("Erreur lors du leave :", error.message);
+      socket.emit("error", "Impossible de quitter le channel.");
+    }
   }
 }
