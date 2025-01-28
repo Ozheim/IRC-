@@ -1,62 +1,83 @@
 <template>
-  <div class="min-h-screen bg-gray-800 text-white flex">
-    <!-- Liste des canaux -->
-    <div class="w-1/4 bg-gray-900 p-4 flex flex-col">
-      <h2 class="text-lg font-bold mb-4">Canaux</h2>
-      <ul class="space-y-2 flex-1 overflow-y-auto">
+  <div class="min-h-screen flex bg-gray-100">
+    <!-- Barre latérale (Canaux) -->
+    <div class="w-64 bg-white flex flex-col border-r border-gray-200">
+      <div class="p-4 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-800">Canaux</h2>
+      </div>
+      <ul class="flex-1 overflow-y-auto">
         <li
           v-for="channel in channels"
           :key="channel.id"
           @click="selectChannel(channel.name)"
-          class="cursor-pointer hover:text-orange-400"
-          :class="{ 'text-orange-400': currentChannel === channel.name }"
+          class="cursor-pointer px-4 py-3 transition-colors"
+          :class="{
+            'bg-blue-100 text-blue-800 font-semibold': currentChannel === channel.name,
+            'hover:bg-gray-100 text-gray-600': currentChannel !== channel.name,
+          }"
         >
-          <a href="#" class="block text-base font-medium">{{ channel.name }}</a>
+          {{ channel.name }}
         </li>
       </ul>
     </div>
 
-    <!-- Zone de messages -->
+    <!-- Contenu principal : messages -->
     <div class="flex-1 flex flex-col">
-      <!-- En-tête -->
-      <div class="bg-gray-700 p-4 shadow-lg">
-        <h1 class="text-xl font-bold">
-          Messages pour : <span class="text-orange-400">{{ currentChannel }}</span>
+      <!-- Barre d'entête -->
+      <div class="flex items-center p-4 bg-blue-600 shadow-md">
+        <h1 class="text-xl font-semibold text-white">
+          Messages pour : <span class="font-normal">{{ currentChannel }}</span>
         </h1>
       </div>
 
-      <!-- Liste des messages -->
-      <div
-        id="chat-messages"
-        class="flex-1 bg-gray-700 p-4 rounded-lg overflow-y-auto space-y-4"
-      >
-        <p
+      <!-- Zone des messages -->
+      <div id="chat-messages" class="flex-1 p-4 overflow-y-auto bg-gray-50">
+        <div
           v-for="(msg, index) in messages[currentChannel] || []"
           :key="index"
-          class="bg-gray-600 p-3 rounded-lg"
+          class="mb-3 flex"
+          :class="{
+            'justify-end': msg.nickname === nickname,
+            'justify-start': msg.nickname !== nickname,
+          }"
         >
-          <strong class="text-orange-400">{{ msg.nickname }}</strong> : {{ msg.message }}
-        </p>
-        <p v-if="!(messages[currentChannel]?.length)" class="text-gray-400 text-center">
+          <div
+            class="max-w-[70%] p-3 rounded-xl text-sm shadow"
+            :class="{
+              'bg-blue-500 text-white rounded-tr-none': msg.nickname === nickname,
+              'bg-white text-gray-700 rounded-tl-none': msg.nickname !== nickname,
+            }"
+          >
+            <strong v-if="msg.nickname !== nickname" class="block font-semibold mb-1">
+              {{ msg.nickname }}
+            </strong>
+            <p>{{ msg.message }}</p>
+          </div>
+        </div>
+
+        <!-- Message par défaut si aucun message dans ce canal -->
+        <p v-if="!(messages[currentChannel]?.length)" class="text-gray-500 text-center mt-4">
           Aucun message pour ce canal.
         </p>
       </div>
 
-      <!-- Envoi de message -->
-      <div class="p-4 bg-gray-800 flex items-center space-x-4">
-        <input
-          v-model="message"
-          type="text"
-          placeholder="Tapez votre message..."
-          class="flex-1 px-4 py-2 rounded bg-gray-700 border border-gray-600 focus:ring focus:ring-orange-400"
-          @keydown.enter="sendMessage"
-        />
-        <button
-          @click="sendMessage"
-          class="px-6 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 focus:outline-none focus:ring focus:ring-orange-400"
-        >
-          Envoyer
-        </button>
+      <!-- Zone d'envoi de message -->
+      <div class="p-4 bg-white border-t border-gray-200">
+        <div class="flex items-center space-x-2">
+          <input
+            v-model="message"
+            type="text"
+            placeholder="Tapez votre message..."
+            class="flex-1 px-4 py-2 rounded-full bg-gray-100 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            @keydown.enter="sendMessage"
+          />
+          <button
+            @click="sendMessage"
+            class="px-5 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Envoyer
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -165,13 +186,14 @@ export default {
     const sendMessage = () => {
       if (message.value.trim()) {
         const msg = message.value.trim();
+
         socket.value.emit("sendMessage", {
           channelName: currentChannel.value,
           message: msg,
           nickname: nickname.value,
         });
 
-        // Ajouter le message localement
+        // On affiche localement le message de l’utilisateur
         messages[currentChannel.value].push({
           nickname: nickname.value,
           message: msg,
@@ -179,9 +201,10 @@ export default {
 
         message.value = "";
 
-        // Scroll automatiquement en bas
         const chatContainer = document.getElementById("chat-messages");
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+        if (chatContainer) {
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
       }
     };
 
@@ -209,20 +232,17 @@ export default {
 </script>
 
 <style scoped>
+/* Personnalisation de la scrollbar du chat */
 #chat-messages::-webkit-scrollbar {
   width: 8px;
 }
 
 #chat-messages::-webkit-scrollbar-thumb {
-  background-color: #4a5568;
+  background-color: #aaa;
   border-radius: 4px;
 }
 
 #chat-messages::-webkit-scrollbar-thumb:hover {
-  background-color: #2d3748;
-}
-
-input:focus {
-  outline: none;
+  background-color: #888;
 }
 </style>

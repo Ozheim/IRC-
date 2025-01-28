@@ -38,9 +38,7 @@ io.on("connection", (socket) => {
   }
 
   socket.on("sendMessage", async ({ channelName, message, nickname }) => {
-    // Check if the message starts with "/"
     if (message.startsWith("/")) {
-      // Process the command by passing the socket, command, and parameters
       const [command, ...params] = message.split(" ");
       const response = CommandHandler.processCommand(
         socket,
@@ -48,25 +46,16 @@ io.on("connection", (socket) => {
         ...params
       );
 
-      console.log("Command response:", response); // Add this line for debugging
-      socket.emit("");
-
-      // If the command returns a response, send it back to the user
-      if (response) {
-        socket.emit("commandResponse", response);
-      }
-      return; // Stop further processing of the message
+      console.log("Command response:", response);
+      socket.emit("commandResponse", response);
+      return;
     }
 
     console.log("Message reçu :", message);
     const newMessage = { channelName, nickname, message };
 
-    // Ajoute le message au channel
-
     await addMessage(channelName, newMessage);
 
-    // Diffuse le message à tous les utilisateurs du channel
-    // console.log(channelName, newMessage);
     io.emit("message", newMessage);
   });
 

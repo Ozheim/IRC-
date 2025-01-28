@@ -26,23 +26,19 @@ export default {
     const commands = ref([]);
     const searchTerm = ref("");
 
-    // Initialisation de Socket.IO
     onMounted(() => {
       if (typeof window !== "undefined") {
         socket.value = io("http://localhost:4000");
 
-        // Émet l'événement pour récupérer les commandes
         socket.value.emit("getCommands");
 
-        // Écoute la réponse du backend
         socket.value.on("commandsList", (data) => {
-          console.log("Commandes reçues :", data); // Vérification dans la console
+          console.log("Commandes reçues :", data);
           commands.value = data;
         });
       }
     });
 
-    // Filtrer les commandes selon la recherche
     const filteredCommands = computed(() =>
       commands.value.filter(
         (cmd) =>
