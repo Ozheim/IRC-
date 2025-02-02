@@ -28,7 +28,7 @@ export default {
 
     onMounted(() => {
       if (typeof window !== "undefined") {
-        socket.value = io("http://localhost:4000");
+        socket.value = io("http://localhost:3001"); // mis à jour sur le port 3001
 
         socket.value.emit("getCommands");
 
